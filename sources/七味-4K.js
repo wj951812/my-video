@@ -2,7 +2,7 @@
 // @author https://github.com/hjdhnx/drpy-node/blob/main/spider/js/%E4%B8%83%E5%91%B3%5B%E4%BC%98%5D.js
 // @description 刮削：支持，弹幕：支持，嗅探：支持，仅保留七味网盘线路的分组版本
 // @dependencies: axios, cheerio
-// @version 1.7.0
+// @version 1.7.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E4%B8%83%E5%91%B3-4K.js
 
 // @jikefuye-key AiQwMkv
@@ -49,7 +49,7 @@ const MAX_PAN_VALID_ROUTES = (() => {
     return Number.isFinite(n) && n > 0 ? n : 3;
 })();
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc");
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").map((s) => s.toLowerCase());
 const QIWEI_CACHE_EX_SECONDS = Number(process.env.QIWEI_CACHE_EX_SECONDS || 43200);
@@ -268,6 +268,7 @@ async function requestWithHost(host, path, options = {}) {
         headers: {
             ...DEFAULT_HEADERS,
             Referer: `${host}/`,
+            Origin: host,
             ...(options.headers || {}),
         },
     });
@@ -3904,6 +3905,7 @@ async function play(params, context = {}) {
     const defaultHeader = {
         ...DEFAULT_HEADERS,
         Referer: `${getCurrentHost()}/`,
+        Origin: getCurrentHost(),
     };
 
     if (isDirectVideoUrl(resolvedPlayUrl)) {

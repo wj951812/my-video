@@ -2,7 +2,7 @@
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持，只支持tvbox接口
 // @dependencies: crypto, axios
-// @version 1.6.0
+// @version 1.6.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E4%B9%9D%E4%B8%83-%E7%BB%BC%E5%90%88.js
 
 // @jikefuye-key SoAiPanSoo
@@ -71,7 +71,7 @@ function splitConfigList(value) {
 // 网盘类型匹配配置: 支持逗号/分号分隔，例如 quark;uc 或 quark,uc
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc;aliyun");
 // 线路名称配置: 支持逗号/分号分隔，例如 直连;本地代理;服务端代理
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
 // 是否开启外网服务器代理（默认关闭）
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 // 详情页播放线路和搜索分组的网盘排序顺序

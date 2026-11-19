@@ -1,7 +1,7 @@
 // @name 💥贱片┃秒播💥
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持
-// @version 1.3.1
+// @version 1.4.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%B4%B1%E7%89%87-%E7%A7%92%E6%92%AD.js
 // @jikefuye-key 賤賤
 // @jikefuye-api csp_WexAiJianPianGuard
@@ -44,7 +44,8 @@ function withPlayEnhancementTimeout(promise) {
 
 
 const JIANPIAN_NATIVE_UA = process.env.JIANPIAN_USER_AGENT || "Mozilla/5.0 (Linux; Android 9; V2196A Build/PQ3A.190705.08211809; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36;webank/h5face;webank/1.0;netType:NETWORK_WIFI;appVersion:416;packageName:com.jp3.xg3";
-const JIANPIAN_PLAY_HEADER_MODE = String(process.env.JIANPIAN_PLAY_HEADER_MODE || "none").toLowerCase();
+const JIANPIAN_PLAY_HEADER_MODE = String(process.env.JIANPIAN_PLAY_HEADER_MODE || "native").toLowerCase();
+const JIANPIAN_DOMAIN_DNS = process.env.JIANPIAN_DOMAIN_DNS || "https://dns.alidns.com/resolve?name=swrdsfeiujo25sw.cc&type=TXT";
 
 /**
  * 配置信息
@@ -65,11 +66,72 @@ const jpConfig = {
   timeout: 10000
 };
 
-// 播放请求头
-const PLAY_HEADERS = JIANPIAN_PLAY_HEADER_MODE === "none" ? {} : {
-  'User-Agent': JIANPIAN_NATIVE_UA,
-  'Referer': process.env.JIANPIAN_REFERER || jpConfig.host
-};
+// 原生 WexAiJianPianGuard 在 playerContent() 中会回传下列请求头。
+// OK影视会用本地 HLS 代理注入它们，不应默认清空。
+function getPlayHeaders() {
+  if (JIANPIAN_PLAY_HEADER_MODE === "none") return {};
+  return {
+    'User-Agent': JIANPIAN_NATIVE_UA,
+    'Referer': process.env.JIANPIAN_REFERER || jpConfig.host
+  };
+}
+
+let hostDiscoveryPromise = null;
+
+function parseJianpianDomainSuffixes(payload) {
+  const answers = Array.isArray(payload?.Answer) ? payload.Answer : [];
+  const txt = answers.find((item) => Number(item?.type) === 16)?.data || answers[0]?.data || "";
+  return String(txt)
+    .replace(/^\"|\"$/g, "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+async function probeJianpianHost(baseURL) {
+  const response = await OmniBox.request(`${baseURL}/api/v2/settings/resourceDomainConfig`, {
+    method: "GET",
+    timeout: 5000,
+    headers: { 'User-Agent': JIANPIAN_NATIVE_UA, 'Referer': baseURL }
+  });
+  if (response.statusCode !== 200) throw new Error(`HTTP ${response.statusCode}`);
+  const payload = JSON.parse(response.body || "{}");
+  if (Number(payload?.code) !== 1) throw new Error(payload?.msg || "动态域名不可用");
+  const imageDomains = String(payload?.data?.imgDomain || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return {
+    host: baseURL,
+    imgHost: imageDomains.length ? `https://${imageDomains[1] || imageDomains[0]}` : jpConfig.imgHost
+  };
+}
+
+async function ensureJianpianHost() {
+  if (hostDiscoveryPromise) return hostDiscoveryPromise;
+  hostDiscoveryPromise = (async () => {
+    try {
+      const dnsResponse = await OmniBox.request(JIANPIAN_DOMAIN_DNS, {
+        method: "GET",
+        timeout: 5000,
+        headers: { 'Accept': 'application/dns-json' }
+      });
+      if (dnsResponse.statusCode !== 200) throw new Error(`DNS HTTP ${dnsResponse.statusCode}`);
+      const suffixes = parseJianpianDomainSuffixes(JSON.parse(dnsResponse.body || "{}"));
+      const candidates = suffixes.map((suffix) => `https://wangerniu.${suffix}`);
+      if (!candidates.length) throw new Error("未取得动态域名");
+      const selected = await Promise.any(candidates.map(probeJianpianHost));
+      jpConfig.host = selected.host;
+      jpConfig.imgHost = selected.imgHost;
+      jpConfig.headers.Referer = selected.host;
+      logInfo(`动态主站选择成功: ${selected.host}`);
+    } catch (error) {
+      logWarn(`动态主站发现失败，使用备用域名: ${error.message}`);
+    }
+    return jpConfig.host;
+  })();
+  return hostDiscoveryPromise;
+}
 
 // 弹幕API配置(目前仅预留)
 const DANMU_API = process.env.DANMU_API || "";
@@ -236,9 +298,27 @@ function buildScrapedEpisodeName(scrapeData, mapping, originalName) {
  */
 async function request(url, options = {}) {
   try {
-    const response = await OmniBox.request(url, {
+    const oldOrigin = (() => {
+      try {
+        return new URL(url).origin;
+      } catch (_) {
+        return "";
+      }
+    })();
+    await ensureJianpianHost();
+    let requestURL = url;
+    try {
+      const parsed = new URL(url);
+      if (oldOrigin && oldOrigin !== jpConfig.host && parsed.pathname.startsWith("/api/")) {
+        requestURL = `${jpConfig.host}${parsed.pathname}${parsed.search}`;
+      }
+    } catch (_) {
+      requestURL = url;
+    }
+
+    const response = await OmniBox.request(requestURL, {
       method: options.method || "GET",
-      headers: options.headers || jpConfig.headers,
+      headers: options.headers || { ...jpConfig.headers, 'Referer': jpConfig.host },
       timeout: options.timeout || jpConfig.timeout,
       body: options.body
     });
@@ -745,7 +825,7 @@ const sniffJianpianPlay = async (playUrl) => {
       return {
         urls: [{ name: "嗅探线路", url: sniffed.url }],
         parse: 0,
-        header: sniffed.header || { ...PLAY_HEADERS, "Referer": playUrl }
+        header: sniffed.header || { ...getPlayHeaders(), "Referer": playUrl }
       };
     }
   } catch (error) {
@@ -894,6 +974,9 @@ const getDetail = async (ids) => {
 const handlePlay = async (playId, vodId = "", context = {}) => {
   try {
     logInfo('处理播放请求', { url: playId.substring(0, 50) + '...' });
+    // OmniBox 可能为每次方法调用创建独立脚本进程，播放时也要重新发现当前动态主站，
+    // 以便返回与原生 Guard 一致的 Referer。
+    await ensureJianpianHost();
 
     const from = context?.from || "web";
     const isWeb = from === "web";
@@ -927,7 +1010,7 @@ const handlePlay = async (playId, vodId = "", context = {}) => {
         return {
           urls: [{ name: "直接播放", url: rawPlayId }],
           parse: 0,
-          header: isWeb ? {} : PLAY_HEADERS
+          header: isWeb ? {} : getPlayHeaders()
         };
       }
 
@@ -945,7 +1028,7 @@ const handlePlay = async (playId, vodId = "", context = {}) => {
       return {
         urls: [{ name: "播放", url: rawPlayId }],
         parse: 1,
-        header: isWeb ? {} : PLAY_HEADERS
+        header: isWeb ? {} : getPlayHeaders()
       };
     })();
 

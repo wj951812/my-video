@@ -2,7 +2,7 @@
 // @author 梦
 // @description 刮削：已接入，弹幕：已接入，嗅探：不需要（直链优先，支持网盘线路展开）
 // @dependencies
-// @version 1.6.0
+// @version 1.6.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E7%AB%8B%E6%92%AD-4K.js
 
 // @jikefuye-key AiNewLibvio
@@ -49,7 +49,7 @@ const FILTER_CACHE_TTL = 60 * 20;
 const PAN_SHARE_CACHE_TTL = 60 * 60;
 const PLAY_CACHE_TTL = 60 * 3;
 const DRIVE_TYPE_CONFIG = (process.env.DRIVE_TYPE_CONFIG || "quark;uc").split(";").map((t) => t.trim().toLowerCase()).filter(Boolean);
-const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理").split(";").map((s) => s.trim()).filter(Boolean);
+const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连").split(";").map((s) => s.trim()).filter(Boolean);
 const DRIVE_ORDER = (process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").split(";").map((s) => s.trim().toLowerCase()).filter(Boolean);
 const panShareCache = new Map();
 
@@ -1749,6 +1749,7 @@ async function play(params, context) {
 
         const sniffHeaders = {
             Referer: `${getCurrentHost()}/`,
+            Origin: getCurrentHost(),
             "User-Agent": UA
         };
         const playInfoPromise = (async () => {

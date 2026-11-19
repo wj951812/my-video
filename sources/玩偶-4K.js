@@ -2,7 +2,7 @@
 // @author
 // @description 刮削：支持，弹幕：支持，播放记录：支持
 // @dependencies: axios, cheerio
-// @version 1.3.0
+// @version 1.3.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E7%8E%A9%E5%81%B6-4K.js
 
 // @jikefuye-key 玩偶
@@ -50,7 +50,7 @@ const DRIVE_TYPE_CONFIG = (process.env.DRIVE_TYPE_CONFIG || "quark;uc")
   .map((t) => t.trim())
   .filter((t) => t);
 // 读取环境变量：线路名称和顺序，用分号分割
-const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理")
+const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连")
   .split(";")
   .map((s) => s.trim())
   .filter((s) => s);

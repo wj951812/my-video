@@ -2,7 +2,7 @@
 // @author 梦
 // @description 刮削：已接入，弹幕：未接入，嗅探：官方 playback_v2 直链优先（失败时页面回退）；适配新版 /ysapi 接口
 // @dependencies crypto-js
-// @version 1.5.0
+// @version 1.5.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E4%BC%AF%E4%BC%AF-%E7%A7%92%E6%92%AD.js
 
 // @jikefuye-key WexAiBoBo
@@ -295,6 +295,7 @@ function _buildDirectResult(urls, referer) {
   const headers = {
     "User-Agent": UA,
     "Referer": referer || `${BASE_URL}/`,
+    "Origin": BASE_URL
   };
   return {
     parse: 0,
@@ -309,6 +310,7 @@ function _buildFallback(pageUrl, name = "FKTV 接口未返回可播地址") {
   const headers = {
     "User-Agent": UA,
     "Referer": pageUrl,
+    "Origin": BASE_URL
   };
   return {
     parse: 1,

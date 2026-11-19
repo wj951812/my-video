@@ -26,14 +26,14 @@
 
 ## 荐片播放兼容
 
-“贱片秒播”对 m3u8/mp4 直链默认返回空请求头，避免 OK影视因为请求头转发而生成 `127.0.0.1:9979/m3u8.m3u8` 本地代理。若个别 CDN 无请求头返回 403，可给该源设置 `JIANPIAN_PLAY_HEADER_MODE=native` 恢复原生 Guard 的 Android UA 与 Referer；需要自定义 Referer 时使用 `JIANPIAN_REFERER`。
+“贱片秒播” 1.4.0 已恢复原生 `WexAiJianPianGuard` 的关键逻辑：启动时通过 DNS TXT 发现 `wangerniu.*` 动态主站，并在播放时返回荐片原生 Android UA 与当前主站 Referer。OK影视因转发请求头而显示 `127.0.0.1:9980/m3u8.m3u8` 属正常现象，该本地代理用于向 CDN 注入必要请求头。仅在明确不需要鉴权时才设置 `JIANPIAN_PLAY_HEADER_MODE=none`；需要自定义 Referer 时使用 `JIANPIAN_REFERER`。
 
 ## 播放性能
 
-- 除“虎斑 4K”外，其余 17 个网盘类源默认线路为 `直连 → 本地代理 → 服务端代理`。
+- 除“虎斑 4K”外，其余 17 个网盘类源已恢复原 Guard 的默认线路 `本地代理 → 服务端代理 → 直连`，使 OK影视能通过本地 HLS 代理注入网盘播放所需的 Cookie/UA/Referer。
 - 17 个源中的 19 条播放增强链路，刮削/弹幕等待限制为最多 500ms，避免已经获得播放地址后仍长时间转圈。
 - 可通过 `PLAY_ENHANCEMENT_TIMEOUT_MS` 调整等待时间；设置为 `0` 表示完全不等待播放增强。
-- 仅删除了与原生 Guard 不一致、可确认多余的播放 `Origin`；站点鉴权或防盗链确实需要的请求头仍然保留。
+- 不再批量删除播放 `Origin`；伯伯、虎牙、魔都、七味、立播已恢复原实现的 Origin/Referer/UA 组合。
 
 ## 虎斑 4K 服务端播放模式
 

@@ -7,7 +7,7 @@
 ﻿// @name Echo4K
 // @author 梦
 // @description 影视站：echo4k.net，蓝光原盘/4K资源；支持首页、分类、搜索、详情、网盘/磁力链接提取、刮削、弹幕；Cookie 支持环境变量配置
-// @version 1.2.0
+// @version 1.2.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E9%80%B8%E5%8A%A8-4K.js
 // @dependencies cheerio
 
@@ -34,7 +34,7 @@ const SESSION_COOKIE_KEY = "echo4k:phpsessid";
 const SESSION_CACHE_TTL = 3600;
 
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc;115");
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "115;quark;uc;baidu;tianyi;xunlei;ali;123pan").map((s) => s.toLowerCase());
 
 const VIDEO_EXTENSIONS = [

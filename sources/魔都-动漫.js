@@ -2,7 +2,7 @@
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持
 // @dependencies: axios, cheerio
-// @version 1.1.0
+// @version 1.1.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E9%AD%94%E9%83%BD-%E5%8A%A8%E6%BC%AB.js
 // @jikefuye-key AnimeAiMoDu
 // @jikefuye-api csp_AnimeAiMoDuGuard
@@ -53,6 +53,7 @@ let aowuValidatorCookie = "";
 const PLAY_HEADERS = {
   "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
   "Referer": "https://www.aowu.tv/",
+  "Origin": "https://www.aowu.tv"
 };
 
 /**
