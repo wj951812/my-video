@@ -1,7 +1,7 @@
 // @name 🎠盘搜┃综合🎠
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持，网盘：115、夸克、UC、百度、天翼、移动、阿里、迅雷、123，来源：web、tvbox、uz、emby、catvod
-// @version 1.3.13
+// @version 1.4.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E7%9B%98%E6%90%9C-%E7%BB%BC%E5%90%88.js
 // @jikefuye-key SoAiHaiYin
 // @jikefuye-api csp_SoAiHaiYinGuard
@@ -82,8 +82,8 @@ function splitConfigList(value) {
 
 // 网盘类型匹配配置: 支持逗号/分号分隔，例如 quark;uc 或 quark,uc
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc");
-// 线路名称配置: 支持逗号/分号分隔，例如 本地代理;服务端代理;直连
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+// 线路名称配置: 支持逗号/分号分隔，例如 直连;本地代理;服务端代理
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 // 是否开启外网服务器代理（默认关闭）
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 // 详情页播放线路的网盘排序顺序，仅作用于 detail() 返回的播放线路

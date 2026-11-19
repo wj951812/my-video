@@ -2,7 +2,7 @@
 // @author 
 // @description 
 // @dependencies: axios, crypto
-// @version 1.0.2
+// @version 1.1.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%99%8E%E7%89%99-%E7%9B%B4%E6%92%AD.js
 
 
@@ -30,7 +30,6 @@ const axiosInstance = axios.create({
   headers: {
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
     "Referer": host,
-    "Origin": host
   }
 });
 

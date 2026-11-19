@@ -2,7 +2,7 @@
 // @author lampon
 // @description
 // @dependencies axios
-// @version 1.1.19
+// @version 1.2.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%A7%82%E5%BD%B1-4K.js
 
 // @jikefuye-key AiNewGuanYing
@@ -76,7 +76,7 @@ const DRIVE_TYPE_CONFIG = (process.env.DRIVE_TYPE_CONFIG || "quark;uc")
   .map((t) => t.trim().toLowerCase())
   .filter(Boolean);
 // 读取环境变量：线路名称和顺序，用分号分割
-const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连")
+const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理")
   .split(";")
   .map((s) => s.trim())
   .filter(Boolean);

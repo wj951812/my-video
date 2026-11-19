@@ -2,7 +2,7 @@
 // @author 梦
 // @description 站点搜索 + 网盘资源解析（夸克/百度/迅雷等），支持网盘目录展开、刮削、弹幕
 // @dependencies: axios
-// @version 1.2.8
+// @version 1.3.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E5%89%A7%E9%80%8F-4K.js
 
 
@@ -37,8 +37,8 @@ const PANCHECK_PLATFORMS = text(process.env.PANCHECK_PLATFORMS || "quark,baidu,u
 // 例：quark;uc 或 quark,uc
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc").map((s) => s.toLowerCase());
 // SOURCE_NAMES_CONFIG：多线路名称列表，支持逗号/分号分隔；web 端默认会过滤“本地代理”
-// 例：本地代理;服务端代理;直连
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+// 例：直连;本地代理;服务端代理
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 
 // 网盘排序配置（必须置于顶部配置区，便于统一管理）
 // DRIVE_ORDER 支持中文网盘名 / 类型码，支持逗号/分号分隔

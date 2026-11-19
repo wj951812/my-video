@@ -2,7 +2,7 @@
 // @indexs 1
 // @author lampon
 // @description 豆瓣推荐爬虫脚本
-// @version 1.0.11
+// @version 1.1.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%B1%86%E7%93%A3%E7%89%87%E5%8D%95.js
 
 // @jikefuye-key Douban
@@ -17,6 +17,7 @@ const OmniBox = require("omnibox_sdk");
 module.exports = {
   home,
   category,
+  search,
 };
 
 // 使用公共 runner 处理标准输入/输出
@@ -893,5 +894,72 @@ async function category(params, context) {
       total: 0,
       list: [],
     };
+  }
+}
+
+/**
+ * 搜索豆瓣影视条目。
+ * OmniBox 的全局搜索会调用所有启用源，因此首页导航源也必须返回标准搜索对象。
+ */
+async function search(params, context) {
+  const keyword = String(params?.keyword || params?.wd || "").trim();
+  const page = Math.max(1, Number(params?.page || 1));
+  const emptyResult = { page, pagecount: 0, total: 0, list: [] };
+
+  try {
+    await OmniBox.log("info", `[douban][search] keyword=${keyword} page=${page}`);
+    if (!keyword || page > 1) return emptyResult;
+
+    const url = `https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(keyword)}`;
+    const response = await OmniBox.request(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        Referer: "https://movie.douban.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      },
+    });
+
+    if (response.statusCode !== 200 || !response.body) {
+      throw new Error(`HTTP ${response.statusCode || 0}`);
+    }
+
+    const data = JSON.parse(typeof response.body === "string" ? response.body : String(response.body));
+    if (!Array.isArray(data)) throw new Error("豆瓣搜索响应不是数组");
+
+    const baseURL = String(context?.baseURL || "").replace(/\/$/, "");
+    const list = data.map((item) => {
+      let vodPic = String(item?.img || "");
+      if (vodPic) {
+        const imageWithReferer = `${vodPic}@Referer=https://movie.douban.com`;
+        vodPic = baseURL
+          ? `${baseURL}/api/proxy/image?url=${encodeURIComponent(imageWithReferer)}`
+          : imageWithReferer;
+      }
+
+      const vodId = String(item?.id || "");
+      return {
+        vod_id: vodId || String(item?.url || ""),
+        link: vodId ? buildDoubanSubjectLink(vodId) : String(item?.url || ""),
+        vod_name: String(item?.title || item?.sub_title || ""),
+        vod_pic: vodPic,
+        vod_remarks: [item?.year, item?.episode ? `${item.episode}集` : ""].filter(Boolean).join(" · "),
+        vod_year: String(item?.year || ""),
+        type_id: String(item?.type || "movie"),
+        type_name: item?.type === "tv" ? "电视剧" : "影视",
+        search: true,
+      };
+    }).filter((item) => item.vod_id && item.vod_name);
+
+    await OmniBox.log("info", `[douban][search] url=${url} list=${list.length}`);
+    return {
+      page: 1,
+      pagecount: list.length > 0 ? 1 : 0,
+      total: list.length,
+      list,
+    };
+  } catch (error) {
+    await OmniBox.log("error", `[douban][search] ${error.message}`);
+    return emptyResult;
   }
 }

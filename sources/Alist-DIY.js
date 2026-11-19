@@ -2,7 +2,7 @@
 // @author @sifanss
 // @description 必填参数：BASE_URL，XIAOYA_TOKEN。刮削：支持，弹幕：支持，播放记录：支持
 // @dependencies: axios
-// @version 1.1.5
+// @version 1.2.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/Alist-DIY.js
 
 // @jikefuye-key AList
@@ -13,6 +13,15 @@
 
 // 引入 OmniBox SDK
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 
 let axios;
 try {
@@ -789,7 +798,7 @@ async function play(params, context) {
 
     const [playResult, metadataResult] = await Promise.allSettled([
       requestXiaoya(PLAY_PATH, { id: mainPlayId }),
-      metadataPromise,
+      withPlayEnhancementTimeout(metadataPromise),
     ]);
     if (playResult.status !== "fulfilled") {
       throw playResult.reason || new Error("获取播放地址失败");

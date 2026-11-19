@@ -2,7 +2,7 @@
 // @author 梦
 // @description 影视站：支持首页、分类（VIP精选/类型筛选）、详情、搜索与播放，补齐刮削、弹幕，基于 https://www.cd-zj.com
 // @dependencies cheerio
-// @version 1.0.3
+// @version 1.1.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E5%B0%8F%E6%9E%AB-%E7%A7%92%E6%92%AD.js
 
 // @jikefuye-key WexFengYe4K
@@ -12,6 +12,15 @@
 // @migration-note 已从极客 98 源中清理兼容冒名、重复及默认不可用入口。
 
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 const runner = require("spider_runner");
 const cheerio = require("cheerio");
 const https = require("https");
@@ -834,7 +843,7 @@ async function play(params = {}, context = {}) {
       return result;
     })();
 
-    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
     if (playInfoResult.status !== "fulfilled") {
       throw playInfoResult.reason || new Error("播放主链路失败");
     }

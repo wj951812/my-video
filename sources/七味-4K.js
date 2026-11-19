@@ -2,7 +2,7 @@
 // @author https://github.com/hjdhnx/drpy-node/blob/main/spider/js/%E4%B8%83%E5%91%B3%5B%E4%BC%98%5D.js
 // @description 刮削：支持，弹幕：支持，嗅探：支持，仅保留七味网盘线路的分组版本
 // @dependencies: axios, cheerio
-// @version 1.6.25
+// @version 1.7.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E4%B8%83%E5%91%B3-4K.js
 
 // @jikefuye-key AiQwMkv
@@ -15,6 +15,15 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const crypto = require("crypto");
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 
 const DANMU_API = process.env.DANMU_API || "";
 const PANCHECK_API = process.env.PANCHECK_API || "";
@@ -40,7 +49,7 @@ const MAX_PAN_VALID_ROUTES = (() => {
     return Number.isFinite(n) && n > 0 ? n : 3;
 })();
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc");
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").map((s) => s.toLowerCase());
 const QIWEI_CACHE_EX_SECONDS = Number(process.env.QIWEI_CACHE_EX_SECONDS || 43200);
@@ -259,7 +268,6 @@ async function requestWithHost(host, path, options = {}) {
         headers: {
             ...DEFAULT_HEADERS,
             Referer: `${host}/`,
-            Origin: host,
             ...(options.headers || {}),
         },
     });
@@ -3677,7 +3685,7 @@ async function resolve115MagnetPlay(playId, flag, callerSource, context, params 
 
     const [playUrlResult, metadataResult] = await Promise.allSettled([
         get115VideoPlayUrl(realFile),
-        metadataPromise,
+        withPlayEnhancementTimeout(metadataPromise),
     ]);
     if (playUrlResult.status !== "fulfilled") {
         throw playUrlResult.reason || new Error("115未返回可播放地址");
@@ -3824,7 +3832,7 @@ async function play(params, context = {}) {
                     return result;
                 })();
 
-                const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+                const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
                 if (playInfoResult.status !== "fulfilled") {
                     throw playInfoResult.reason || new Error("无法获取播放地址");
                 }
@@ -3896,7 +3904,6 @@ async function play(params, context = {}) {
     const defaultHeader = {
         ...DEFAULT_HEADERS,
         Referer: `${getCurrentHost()}/`,
-        Origin: getCurrentHost(),
     };
 
     if (isDirectVideoUrl(resolvedPlayUrl)) {

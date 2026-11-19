@@ -1,7 +1,7 @@
 // @name 💥贱片┃秒播💥
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持
-// @version 1.1.4
+// @version 1.3.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%B4%B1%E7%89%87-%E7%A7%92%E6%92%AD.js
 // @jikefuye-key 賤賤
 // @jikefuye-api csp_WexAiJianPianGuard
@@ -33,6 +33,18 @@
  */
 
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
+
+const JIANPIAN_NATIVE_UA = process.env.JIANPIAN_USER_AGENT || "Mozilla/5.0 (Linux; Android 9; V2196A Build/PQ3A.190705.08211809; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36;webank/h5face;webank/1.0;netType:NETWORK_WIFI;appVersion:416;packageName:com.jp3.xg3";
+const JIANPIAN_PLAY_HEADER_MODE = String(process.env.JIANPIAN_PLAY_HEADER_MODE || "native").toLowerCase();
 
 /**
  * 配置信息
@@ -44,10 +56,9 @@ const jpConfig = {
   imgHost: "https://img.ztfgh.com",
   // 请求头
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'User-Agent': JIANPIAN_NATIVE_UA,
     'Accept': 'application/json, text/plain, */*',
     'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Origin': 'https://h5.jianpianips1.com',
     'Referer': 'https://h5.jianpianips1.com/'
   },
   // 超时时间(毫秒)
@@ -55,10 +66,9 @@ const jpConfig = {
 };
 
 // 播放请求头
-const PLAY_HEADERS = {
-  'User-Agent': jpConfig.headers['User-Agent'],
-  'Referer': jpConfig.host,
-  'Origin': jpConfig.host
+const PLAY_HEADERS = JIANPIAN_PLAY_HEADER_MODE === "none" ? {} : {
+  'User-Agent': JIANPIAN_NATIVE_UA,
+  'Referer': process.env.JIANPIAN_REFERER || jpConfig.host
 };
 
 // 弹幕API配置(目前仅预留)
@@ -668,15 +678,14 @@ const searchVod = async (wd, pg = 1) => {
 
 /**
  * 检查线路是否需要屏蔽
- * 屏蔽包含 VIP、FTP、常规 关键字的线路
+ * 仅屏蔽 FTP、常规线路；VIP 线路是原生 Guard 的首选线路，予以保留。
  * @param {string} sourceName - 线路名称
  * @returns {boolean} 是否屏蔽
  */
 const shouldBlockSource = (sourceName) => {
   if (!sourceName) return false;
   const name = sourceName.toLowerCase();
-  return name.includes('vip') ||
-    name.includes('ftp') ||
+  return name.includes('ftp') ||
     name === '常规线路' ||
     name === '常规';
 };
@@ -990,7 +999,7 @@ const handlePlay = async (playId, vodId = "", context = {}) => {
       return result;
     })();
 
-    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
 
     if (playInfoResult.status !== "fulfilled") {
       throw playInfoResult.reason || new Error("播放主链路失败");

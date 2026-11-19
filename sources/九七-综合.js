@@ -2,7 +2,7 @@
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持，只支持tvbox接口
 // @dependencies: crypto, axios
-// @version 1.5.4
+// @version 1.6.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E4%B9%9D%E4%B8%83-%E7%BB%BC%E5%90%88.js
 
 // @jikefuye-key SoAiPanSoo
@@ -31,6 +31,15 @@
 const axios = require("axios");
 const crypto = require("crypto");
 const OmniBox = require("omnibox_sdk");
+
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+    if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+    return Promise.race([
+        promise,
+        new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+    ]);
+}
 
 // ==================== 配置区域 ====================
 const PANSOU_API = process.env.PANSOU_API || "";
@@ -61,8 +70,8 @@ function splitConfigList(value) {
 
 // 网盘类型匹配配置: 支持逗号/分号分隔，例如 quark;uc 或 quark,uc
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc;aliyun");
-// 线路名称配置: 支持逗号/分号分隔，例如 本地代理;服务端代理;直连
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+// 线路名称配置: 支持逗号/分号分隔，例如 直连;本地代理;服务端代理
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 // 是否开启外网服务器代理（默认关闭）
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 // 详情页播放线路和搜索分组的网盘排序顺序
@@ -764,7 +773,7 @@ async function resolve115MagnetPlay(playId, flag, callerSource, context, params 
         } catch (error) { logWarn("读取115秒传弹幕元数据失败", { error: error.message || String(error) }); }
         return metaResult;
     })();
-    const [playUrlResult, metadataResult] = await Promise.allSettled([get115VideoPlayUrl(realFile), metadataPromise]);
+    const [playUrlResult, metadataResult] = await Promise.allSettled([get115VideoPlayUrl(realFile), withPlayEnhancementTimeout(metadataPromise)]);
     if (playUrlResult.status !== "fulfilled") throw playUrlResult.reason || new Error("115未返回可播放地址");
     const playUrl = playUrlResult.value;
     const metadataValue = metadataResult.status === "fulfilled" ? metadataResult.value : null;

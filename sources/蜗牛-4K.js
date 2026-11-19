@@ -2,7 +2,7 @@
 // @author @Tao_XG
 // @description 刮削：支持，弹幕：支持，嗅探：支持。站点：zmi.kdns.fr（MacCMS mxone 模板，主推 115 分享）
 // @dependencies: axios, cheerio
-// @version 1.0.6
+// @version 1.1.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%9C%97%E7%89%9B-4K.js
 
 // @jikefuye-key 蜗牛
@@ -13,6 +13,15 @@
 
 // 引入 OmniBox SDK
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 // 引入 cheerio(用于 HTML 解析)
 let cheerio;
 try {
@@ -44,7 +53,7 @@ const WEB_SITES = splitConfigList(WEB_SITE_CONFIG);
 // 读取环境变量:支持多个网盘类型,用逗号/分号分割（蜗牛主推 115）
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "115;quark;uc");
 // 读取环境变量:线路名称和顺序,用逗号/分号分割
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 // 是否开启外网服务器代理（默认关闭）
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 // 读取环境变量:详情页播放线路的网盘排序顺序。仅作用于 detail() 里的播放线路，不作用于搜索结果。
@@ -2613,7 +2622,7 @@ async function play(params, context) {
       return result;
     })();
 
-    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
 
     if (playInfoResult.status !== "fulfilled") {
       throw new Error(playInfoResult.reason && playInfoResult.reason.message ? playInfoResult.reason.message : "无法获取播放地址");

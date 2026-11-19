@@ -7,11 +7,20 @@
 ﻿// @name Echo4K
 // @author 梦
 // @description 影视站：echo4k.net，蓝光原盘/4K资源；支持首页、分类、搜索、详情、网盘/磁力链接提取、刮削、弹幕；Cookie 支持环境变量配置
-// @version 1.1.2
+// @version 1.2.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E9%80%B8%E5%8A%A8-4K.js
 // @dependencies cheerio
 
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 const runner = require("spider_runner");
 
 const BASE_URL = process.env.ECHO4K_HOST || "https://www.echo4k.net";
@@ -25,7 +34,7 @@ const SESSION_COOKIE_KEY = "echo4k:phpsessid";
 const SESSION_CACHE_TTL = 3600;
 
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc;115");
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "115;quark;uc;baidu;tianyi;xunlei;ali;123pan").map((s) => s.toLowerCase());
 
 const VIDEO_EXTENSIONS = [
@@ -700,7 +709,7 @@ async function play(params, context) {
 
     const [playInfoResult, metadataResult] = await Promise.allSettled([
       OmniBox.getDriveVideoPlayInfo(shareURL, fileId, routeType),
-      metadataPromise,
+      withPlayEnhancementTimeout(metadataPromise),
     ]);
 
     if (playInfoResult.status !== "fulfilled") {

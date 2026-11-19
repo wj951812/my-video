@@ -1,7 +1,7 @@
 // @name 💓115┃分享💓‍
 // @author 梦
 // @description 影视站：gimy115.top，支持首页、分类、搜索、详情与网盘线路提取；支持刮削、弹幕、播放记录；Cookie 支持环境变量配置
-// @version 1.2.4
+// @version 1.3.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/115-%E5%88%86%E4%BA%AB.js
 // @dependencies cheerio
 
@@ -12,6 +12,15 @@
 // @migration-note 已从极客 98 源中清理兼容冒名、重复及默认不可用入口。
 
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 const runner = require("spider_runner");
 const cheerio = require("cheerio");
 
@@ -982,7 +991,7 @@ async function play(params, context) {
 
       const [playInfoResult, metadataResult] = await Promise.allSettled([
         OmniBox.getDriveVideoPlayInfo(shareURL, fileId, routeType),
-        metadataPromise,
+        withPlayEnhancementTimeout(metadataPromise),
       ]);
       if (playInfoResult.status !== "fulfilled") {
         throw new Error(playInfoResult.reason && playInfoResult.reason.message ? playInfoResult.reason.message : `未获取到网盘播放地址: ${shareURL}`);

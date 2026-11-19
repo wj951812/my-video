@@ -1,7 +1,7 @@
 // @name 💓‍原盘┃4K💓‍
 // @author 梦
 // @description 网盘资源站：https://4kzn.cc ，支持首页、分类、详情、搜索、网盘播放、刮削、弹幕
-// @version 1.2.6
+// @version 1.3.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E5%8E%9F%E7%9B%98-4K.js
 // @dependencies cheerio
 
@@ -12,6 +12,15 @@
 // @migration-note 已从极客 98 源中清理兼容冒名、重复及默认不可用入口。
 
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 const runner = require("spider_runner");
 const cheerio = require("cheerio");
 
@@ -24,7 +33,7 @@ const HEADERS = {
 };
 
 const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc");
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连");
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").map((s) => s.toLowerCase());
 const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
 
@@ -693,7 +702,7 @@ async function play(params, context) {
 
     const [playInfoResult, metadataResult] = await Promise.allSettled([
       OmniBox.getDriveVideoPlayInfo(shareURL, fileId, routeType),
-      metadataPromise,
+      withPlayEnhancementTimeout(metadataPromise),
     ]);
 
     if (playInfoResult.status !== "fulfilled") {

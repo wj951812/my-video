@@ -2,7 +2,7 @@
 // @author 梦
 // @description 刮削：已接入，弹幕：已接入，嗅探：不需要（直链优先，支持网盘线路展开）
 // @dependencies
-// @version 1.5.10
+// @version 1.6.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E7%AB%8B%E6%92%AD-4K.js
 
 // @jikefuye-key AiNewLibvio
@@ -16,6 +16,15 @@ const https = require("https");
 const crypto = require("crypto");
 const { URL } = require("url");
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 const runner = require("spider_runner");
 
 const HOST_CANDIDATES = [
@@ -40,7 +49,7 @@ const FILTER_CACHE_TTL = 60 * 20;
 const PAN_SHARE_CACHE_TTL = 60 * 60;
 const PLAY_CACHE_TTL = 60 * 3;
 const DRIVE_TYPE_CONFIG = (process.env.DRIVE_TYPE_CONFIG || "quark;uc").split(";").map((t) => t.trim().toLowerCase()).filter(Boolean);
-const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连").split(";").map((s) => s.trim()).filter(Boolean);
+const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理").split(";").map((s) => s.trim()).filter(Boolean);
 const DRIVE_ORDER = (process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").split(";").map((s) => s.trim().toLowerCase()).filter(Boolean);
 const panShareCache = new Map();
 
@@ -1718,7 +1727,7 @@ async function play(params, context) {
                     }
                     return result;
                 })();
-                const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+                const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
                 if (playInfoResult.status === "fulfilled") {
                     const playInfo = playInfoResult.value || {};
                     const urlList = Array.isArray(playInfo?.url) ? playInfo.url : [];
@@ -1740,7 +1749,6 @@ async function play(params, context) {
 
         const sniffHeaders = {
             Referer: `${getCurrentHost()}/`,
-            Origin: getCurrentHost(),
             "User-Agent": UA
         };
         const playInfoPromise = (async () => {
@@ -1843,7 +1851,7 @@ async function play(params, context) {
             return result;
         })();
 
-        const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+        const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
         if (playInfoResult.status !== "fulfilled") {
             throw playInfoResult.reason || new Error("播放主链路失败");
         }

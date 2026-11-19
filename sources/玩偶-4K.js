@@ -2,7 +2,7 @@
 // @author
 // @description 刮削：支持，弹幕：支持，播放记录：支持
 // @dependencies: axios, cheerio
-// @version 1.2.4
+// @version 1.3.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E7%8E%A9%E5%81%B6-4K.js
 
 // @jikefuye-key 玩偶
@@ -13,6 +13,15 @@
 
 // 引入 OmniBox SDK
 const OmniBox = require("omnibox_sdk");
+const PLAY_ENHANCEMENT_TIMEOUT_MS = Math.max(0, Number(process.env.PLAY_ENHANCEMENT_TIMEOUT_MS || 500));
+function withPlayEnhancementTimeout(promise) {
+  if (PLAY_ENHANCEMENT_TIMEOUT_MS === 0) return Promise.resolve(null);
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(null), PLAY_ENHANCEMENT_TIMEOUT_MS)),
+  ]);
+}
+
 // 引入 cheerio(用于 HTML 解析)
 let cheerio;
 try {
@@ -41,7 +50,7 @@ const DRIVE_TYPE_CONFIG = (process.env.DRIVE_TYPE_CONFIG || "quark;uc")
   .map((t) => t.trim())
   .filter((t) => t);
 // 读取环境变量：线路名称和顺序，用分号分割
-const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "本地代理;服务端代理;直连")
+const SOURCE_NAMES_CONFIG = (process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理")
   .split(";")
   .map((s) => s.trim())
   .filter((s) => s);
@@ -1338,7 +1347,7 @@ async function play(params, context) {
       return result;
     })();
 
-    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, metadataPromise]);
+    const [playInfoResult, metadataResult] = await Promise.allSettled([playInfoPromise, withPlayEnhancementTimeout(metadataPromise)]);
 
     if (playInfoResult.status !== "fulfilled") {
       throw new Error(playInfoResult.reason && playInfoResult.reason.message ? playInfoResult.reason.message : "无法获取播放地址");
