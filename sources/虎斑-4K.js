@@ -2,7 +2,7 @@
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持
 // @dependencies: axios, cheerio
-// @version 1.1.0
+// @version 1.2.0
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%99%8E%E6%96%91-4K.js
 
 // @jikefuye-key AiNewHuBan
@@ -47,14 +47,18 @@ function splitConfigList(value) {
 }
 
 // 网站地址(可以通过环境变量配置,支持多个域名用逗号/分号分割)
-const WEB_SITE_CONFIG = process.env.WEB_SITE_HUBAN || "http://38.76.197.172:16969;http://154.222.27.33:20720;http://xhban.xyz:20720;http://103.45.162.207:20720;";
+const WEB_SITE_CONFIG = process.env.WEB_SITE_HUBAN || "http://103.40.14.172:16968;http://xhban.xyz;http://xhban.xyz:20720;http://38.76.197.172:16969";
 const WEB_SITES = splitConfigList(WEB_SITE_CONFIG);
 // 读取环境变量:支持多个网盘类型,用逗号/分号分割
-const DRIVE_TYPE_CONFIG = splitConfigList(process.env.DRIVE_TYPE_CONFIG || "quark;uc");
+const DRIVE_TYPE_CONFIG = splitConfigList(
+  process.env.DRIVE_TYPE_CONFIG || "quark;uc;ali;tianyi;yidong;mobile;123;123pan;115;baidu;xunlei;guangyapan"
+);
 // 读取环境变量:线路名称和顺序,用逗号/分号分割
-const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "直连;本地代理;服务端代理");
-// 是否开启外网服务器代理（默认关闭）
-const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "false").toLowerCase() === "true";
+// 电视端优先走 NAS 上的 OmniBox 服务端代理，避免客户端生成 127.0.0.1:9979 本地代理地址。
+// 仍保留“直连”作为兼容回退；如需其他顺序可通过 SOURCE_NAMES_CONFIG 覆盖。
+const SOURCE_NAMES_CONFIG = splitConfigList(process.env.SOURCE_NAMES_CONFIG || "服务端代理;直连");
+// 用户的播放链路是“电视 -> OmniBox/NAS -> 网盘”，因此默认允许外网入口下的服务端代理。
+const EXTERNAL_SERVER_PROXY_ENABLED = String(process.env.EXTERNAL_SERVER_PROXY_ENABLED || "true").toLowerCase() === "true";
 // 读取环境变量:详情页播放线路的网盘排序顺序。仅作用于 detail() 里的播放线路，不作用于搜索结果。
 const DRIVE_ORDER = splitConfigList(process.env.DRIVE_ORDER || "baidu;tianyi;quark;uc;115;xunlei;ali;123pan").map(s => s.toLowerCase());
 // 详情链路缓存时间（秒），默认 12 小时

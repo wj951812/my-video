@@ -26,14 +26,21 @@
 
 ## 荐片播放兼容
 
-“贱片秒播”默认使用原生 Guard 的 Android UA 与 Referer 直连播放，不再发送多余的 Origin。若个别 CDN 在你的网络下仍然较慢，可给该源设置 `JIANPIAN_PLAY_HEADER_MODE=none` 测试无请求头直连；需要自定义 Referer 时使用 `JIANPIAN_REFERER`。
+“贱片秒播”对 m3u8/mp4 直链默认返回空请求头，避免 OK影视因为请求头转发而生成 `127.0.0.1:9979/m3u8.m3u8` 本地代理。若个别 CDN 无请求头返回 403，可给该源设置 `JIANPIAN_PLAY_HEADER_MODE=native` 恢复原生 Guard 的 Android UA 与 Referer；需要自定义 Referer 时使用 `JIANPIAN_REFERER`。
 
 ## 播放性能
 
-- 18 个网盘类源默认线路已调整为 `直连 → 本地代理 → 服务端代理`，电视端优先直连 CDN。
+- 除“虎斑 4K”外，其余 17 个网盘类源默认线路为 `直连 → 本地代理 → 服务端代理`。
 - 17 个源中的 19 条播放增强链路，刮削/弹幕等待限制为最多 500ms，避免已经获得播放地址后仍长时间转圈。
 - 可通过 `PLAY_ENHANCEMENT_TIMEOUT_MS` 调整等待时间；设置为 `0` 表示完全不等待播放增强。
 - 仅删除了与原生 Guard 不一致、可确认多余的播放 `Origin`；站点鉴权或防盗链确实需要的请求头仍然保留。
+
+## 虎斑 4K 服务端播放模式
+
+- `虎斑-4K.js` 1.2.0 已参照 CatPaw/UZ 订阅的播放链路，默认线路调整为 `服务端代理 → 直连`，不再生成“本地代理”入口。
+- 默认域名更新为实测正常的 4 个入口，移除两个已无法连接的旧 IP。
+- 电视端链路为 `电视 → OmniBox/NAS → 网盘/CDN`；网盘 Cookie 和授权仍取自 OmniBox 配置中心，脚本中不保存凭据。
+- 如果 NAS 带宽或 CPU 不适合全程代理，可设置 `SOURCE_NAMES_CONFIG=直连` 恢复直连模式。
 
 ## 上传 GitHub
 

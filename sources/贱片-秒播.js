@@ -1,7 +1,7 @@
 // @name 💥贱片┃秒播💥
 // @author 
 // @description 刮削：支持，弹幕：支持，嗅探：支持
-// @version 1.3.0
+// @version 1.3.1
 // @downloadURL https://raw.githubusercontent.com/YOUR_GITHUB_USER/OmniBox-Jike-NewWex-Union/main/sources/%E8%B4%B1%E7%89%87-%E7%A7%92%E6%92%AD.js
 // @jikefuye-key 賤賤
 // @jikefuye-api csp_WexAiJianPianGuard
@@ -44,7 +44,7 @@ function withPlayEnhancementTimeout(promise) {
 
 
 const JIANPIAN_NATIVE_UA = process.env.JIANPIAN_USER_AGENT || "Mozilla/5.0 (Linux; Android 9; V2196A Build/PQ3A.190705.08211809; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36;webank/h5face;webank/1.0;netType:NETWORK_WIFI;appVersion:416;packageName:com.jp3.xg3";
-const JIANPIAN_PLAY_HEADER_MODE = String(process.env.JIANPIAN_PLAY_HEADER_MODE || "native").toLowerCase();
+const JIANPIAN_PLAY_HEADER_MODE = String(process.env.JIANPIAN_PLAY_HEADER_MODE || "none").toLowerCase();
 
 /**
  * 配置信息
